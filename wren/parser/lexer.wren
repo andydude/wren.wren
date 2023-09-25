@@ -94,7 +94,7 @@ class Lexer {
 				return tok
 			} else if (isDigit(_char)) {
 				var lit = readNumber()
-				tok = Token.new(Tok["INTEGER_LIT"], lit)
+				tok = Token.new(Tok["NUMBER_LIT"], lit)
 				return tok
 			} else {
 				tok = Token.new(Tok["EOF"], "illegal")
@@ -105,7 +105,7 @@ class Lexer {
 	}
 	
 	skipSpace() {
-		while (_char == " " || _char == "\t" || _char == "\n" || _char == "\r") {
+		while (_char == " " || _char == "\t" || _char == "\r") {
 			readChar()
 		}
 	}

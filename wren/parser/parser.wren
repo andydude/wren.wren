@@ -17,9 +17,10 @@ import "../ast/ast" for
 	Identifier,
 	IndexExpression,
 	NumberLiteral,
-	VariableStatement,
 	Program,
 	ReturnStatement,
+	StatementDeclaration,
+	VariableDeclaration,
 	StringLiteral,
 	UnaryExpression
 	// Newlines can appear after Commas
@@ -116,16 +117,16 @@ class Parser is PrattParser {
 	}
 
 	parseProgram() {
-		var stmts = []
+		var decls = []
 		while (!match(Tok["EOF"])) {
-			var stmt = parseStatement()
-			if (stmt != null) {
-				stmts.add(stmt)
+			var decl = parseDeclaration()
+			if (decl != null) {
+				decls.add(decl)
 			}
 			advance()
 		}
 		var program = Program.new(
-			BlockStatement.new(stmts))
+			BlockStatement.new(decls))
 		return program
 	}
 
@@ -135,10 +136,26 @@ class Parser is PrattParser {
 		return Identifier.new(name)
 	}
 
+	parseDeclaration() {
+		if (check(Tok["CLASS"])) {
+			return parseClassDeclaration()
+		} else if (check(Tok["FOREIGN"])) {
+			return parseClassDeclaration()
+		} else if (check(Tok["IMPORT"])) {
+			return parseImportDeclaration()
+		} else if (check(Tok["VAR"])) {
+			return parseVariableDeclaration()
+		} else {
+			return StatementDeclaration.new(parseStatement())
+		}
+	}
+	parseClassDeclaration() {
+	}
+	parseImportDeclaration() {
+	}
+	
 	parseStatement() {
-		if (check(Tok["VAR"])) {
-			return parseVariableStatement()
-		} else if (check(Tok["RETURN"])) {
+		if (check(Tok["RETURN"])) {
 			return parseReturnStatement()
 		// } else if (check(Tok["LBRACE"])) {
 		// 	return parseBlockStatement()
@@ -147,7 +164,7 @@ class Parser is PrattParser {
 		}
 	}
 
-	parseVariableStatement() {
+	parseVariableDeclaration() {
 		if (!match(Tok["VAR"])) {
 			Fiber.abort("expected 'let'")
 			return null
@@ -161,7 +178,7 @@ class Parser is PrattParser {
 		if (!match(Tok["NEWLINE"])) {
 			Fiber.abort("expected ';'")
 		}
-		return VariableStatement.new(name, value)
+		return VariableDeclaration.new(name, value)
 	}
 
 	parseReturnStatement() {
@@ -255,17 +272,17 @@ class Parser is PrattParser {
 		if (!match(Tok["LBRACE"])) {
 			return null
 		}
-		var stmts = []
+		var decls = []
 		while (!check(Tok["RBRACE"])) {
-			var stmt = parseStatement()
-			if (stmt != null) {
-				stmts.add(stmt)
+			var decl = parseDeclaration()
+			if (decl != null) {
+				decls.add(decl)
 			}
 		}
 		if (!match(Tok["RBRACE"])) {
 			return null
 		}
-		return BlockStatement.new(stmts)
+		return BlockStatement.new(decls)
 	}
 
 	//parseFunctionDeclaration() {

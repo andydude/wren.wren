@@ -5,35 +5,57 @@ class Node {
 	}
 }
 
-class Declaration is Node {}
+class Declaration is Node {
+	toString {
+		return "UnknownDeclaration"
+	}
+}
 
-class Statement is Node {}
+class Statement is Node {
+	toString {
+		return "UnknownStatement"
+	}
+}
 
-class Expression is Node {}
+class Expression is Node {
+	toString {
+		return "UnknownExpression"
+	}
+}
 
 class Literal is Node {
-	construct new(value) {
-		_value = value
-	}
 	value { _value }
 	value=(value) {
 		_value = value
 	}
+	construct new(value) {
+		_value = value
+	}
+	toString {
+		return _value.toString
+	}
 }
 
 class Program is Node {
-	declarations { _declarations }
-	construct new(declarations) {
-		if (declarations is List == false) {
-			Fiber.abort("expected Declaration[]")
+	body { _body }
+	construct new(body) {
+		if (body is BlockStatement == false) {
+			Fiber.abort("expected BlockStatement")
 		}
-		if (declarations[0] is Declaration == false) {
-			Fiber.abort("expected Declaration[]")
-		}
-		_declarations = declarations
+		_body = body
 	}
-	toString() {
-		return "<Program>"
+	toString {
+		return _body.toString
+	}
+}
+
+class StatementDeclaration is Declaration {
+	statement { _statement }
+	construct new(statement) {
+		_statement = statement
+	}
+	toString {
+		return "<StatementDeclartion>"
 	}
 }
 
@@ -92,7 +114,7 @@ class FunctionDeclaration is Declaration {
 	}
 }
 
-class VariableStatement is Statement {
+class VariableDeclaration is Declaration {
 	name { _name }
 	value { _value }
 	construct new(name, value) {
@@ -100,9 +122,8 @@ class VariableStatement is Statement {
 		_value = value
 	}
 	toString {
-		return "var " + name.toString + " = " + value.toString + ";"
+		return "var " + _name.toString + " = " + _value.toString + "\n"
 	}
-
 }
 
 class ForStatement is Statement {
@@ -113,8 +134,37 @@ class ContinueStatement is Statement {}
 class BreakStatement is Statement {}
 class WhileStatement is Statement {}
 
-class BlockStatement is Statement {}
-class AssignStatement is Statement {}
+class BlockStatement is Statement {
+	statements { _statements }
+	construct new(stmts) {
+		_statements = stmts
+	}
+	toString {
+		var repr = "{"
+		if (_statements.count == 0) {
+			repr = repr + "}"
+			return repr
+		}
+
+		for (st in _statements) {
+			repr = repr + st.toString
+		}
+		
+		repr = repr + "}"
+		return repr
+	}
+}
+class AssignStatement is Statement {
+	name { _name }
+	value { _value }
+	construct new(name, value) {
+		_name = name
+		_value = value
+	}
+	toString {
+		return "var " + _name.toString + " = " + _value.toString + "\n"
+	}
+}
 
 class ConditionStatement is Statement {
 	condition { _condition }
@@ -130,7 +180,6 @@ class ConditionStatement is Statement {
 	toString {
 		var res = "if ("
 		res = res + _condition.toString
-		res
 		res = res + ") "
 		res = res + _thenStatement.toString
 		if (_elseStatement != null) {
@@ -239,14 +288,47 @@ class LiteralExpression is Expression {
 	construct new(literal) {
 		_literal = literal
 	}
+	toString {
+		return _literal.toString
+	}
 }
 
-class Identifier is Expression {}
+class Identifier is Expression {
+	name { _name }
+	construct new(name) {
+		_name = name
+	}
+	toString {
+		return _name
+	}
+}
 
 class BooleanLiteral is Literal {}
-class EmptyLiteral is Literal {}
-class NumberLiteral is Literal {}
+class EmptyLiteral is Literal {
+}
+class NumberLiteral is Literal {
+	construct new(value) {
+		super(value)
+	}
+}
 class StringLiteral is Literal {}
-class ArrayLiteral is Literal {}
+class ArrayLiteral is Literal {
+	value { _value }
+	construct new(value) {
+		_value = value
+	}
+	toString {
+		var elemstr = ""
+		if (_value.count > 0) {
+			elemstr = elemstr + _value[0].toString
+			if (_value.count > 1) {
+				for (i in 1..._value.count) {
+					elemstr = elemstr + ", " + _value[i].toString
+				}
+			}
+		}
+		return "[" + elemstr + "]"
+	}
+}
 class HashMapLiteral is Literal {}
 class HashMemberNode is Node {}

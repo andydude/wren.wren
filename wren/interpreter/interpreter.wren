@@ -32,7 +32,7 @@ import "../ast/ast" for
 	Node,
 	Program,
 	ReturnStatement,
-	VariableStatement,
+	VariableDeclaration,
 	Statement,
 	StringLiteral,
 	UnaryExpression
@@ -66,8 +66,8 @@ class Interpreter {
 	evalStatement(node, env) {
 		if (node is BlockStatement) {
 			return evalBlockStatement(node, env)
-		} else if (node is VariableStatement) {
-			return evalVariableStatement(node, env)
+		} else if (node is VariableDeclaration) {
+			return evalVariableDeclaration(node, env)
 		} else if (node is ReturnStatement) {
 			return evalReturnStatement(node, env)
 		} else if (node is ExpressionStatement) {
@@ -87,7 +87,7 @@ class Interpreter {
 		return result
 	}
 
-	evalVariableStatement(node, env) {
+	evalVariableDeclaration(node, env) {
 		var val = eval(node.value, env)
 		if (isError(val)) {
 			return val
@@ -219,7 +219,7 @@ class Interpreter {
 	}
 
 	evalBooleanLiteral(node, env) {
-		return BooleanRuntime.new(node.bit)
+		return BooleanRuntime.new(node.value)
 	}
 
 	evalEmptyLiteral(node, env) {
@@ -227,15 +227,15 @@ class Interpreter {
 	}
 
 	evalNumberLiteral(node, env) {
-		return NumberRuntime.new(node.num)
+		return NumberRuntime.new(node.value)
 	}
 
 	evalStringLiteral(node, env) {
-		return StringRuntime.new(node.str)
+		return StringRuntime.new(node.value)
 	}
 
 	evalArrayLiteral(node, env) {
-		return ArrayRuntime.new(node.elems)
+		return ArrayRuntime.new(node.value)
 	}
 
 	evalHashMapLiteral(node, env) {
