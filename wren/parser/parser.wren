@@ -104,8 +104,11 @@ class Parser is PrattParser {
 		infixTable[Tok["LT"].value] = PrattEntry.new(
 			Tok["LT"], Prec["REL"], false,
 			Fn.new {|o, t| this.parseInfixExpression(o, t)})
+		infixTable[Tok["QUEST"].value] = PrattEntry.new(
+			Tok["QUEST"], Prec["COND"], false,
+			Fn.new {|o, t| this.parseKeyLiteral(o, t)})
 		infixTable[Tok["COLON"].value] = PrattEntry.new(
-			Tok["COLON"], Prec["KEY"], false,
+			Tok["COLON"], Prec["COND"], false,
 			Fn.new {|o, t| this.parseKeyLiteral(o, t)})
 
 		super(lexer, Prec["LAST"], prefixTable, infixTable)

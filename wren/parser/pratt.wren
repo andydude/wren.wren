@@ -83,7 +83,7 @@ class PrattParser {
 		if (token.kind.name == "RBRACE") {
 			return true
 		}
-		if (token.kind.name == "SEMICOLON") {
+		if (token.kind.name == "NEWLINE") {
 			return true
 		}
 		
@@ -121,21 +121,16 @@ class PrattParser {
 				System.print("Got bad precedence")
 				break
 			}
-			//if (prec < minPrec) {
-			//	break
-			//}
+			
 			advance()
 
-						var right = parseInfixSelector(_previousToken, left)
+			var right = parseInfixSelector(_previousToken, left)
 			if (right == null) {
 				System.print("Got null right")
 				break
 			}
-			
 			left = right
 		}
-
 		return left
 	}
-
 }

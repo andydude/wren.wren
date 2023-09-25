@@ -81,7 +81,7 @@ var Tok = Enum.new("Tok", [
 	"STATIC_FIELD_IDENT",
 	"FIELD_IDENT",
 	"IDENT",
-	"INTEGER_LIT",
+	"NUMBER_LIT",
 	"STRING_LIT",
 
 	// pseudo-token

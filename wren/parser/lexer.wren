@@ -63,8 +63,6 @@ class Lexer {
 			tok = Token.new(Tok["LT"], _char)
 		} else if (_char == ">") {
 			tok = Token.new(Tok["GT"], _char)
-		} else if (_char == ";") {
-			tok = Token.new(Tok["SEMICOLON"], _char)
 		} else if (_char == ":") {
 			tok = Token.new(Tok["COLON"], _char)
 		} else if (_char == ",") {
@@ -81,6 +79,8 @@ class Lexer {
 			tok = Token.new(Tok["LBRACK"], _char)
 		} else if (_char == "]") {
 			tok = Token.new(Tok["RBRACK"], _char)
+		} else if (_char == "\n") {
+			tok = Token.new(Tok["NEWLINE"], _char)
 		} else if (_char == "\"") {
 			var lit = readString()
 			tok = Token.new(Tok["STRING_LIT"], lit)
@@ -185,13 +185,14 @@ class Lexer {
 
 	lookupIdent(ident) {
 		var keywords = {
-			"fn":     Tok["FUNCTION"],
-			"let":    Tok["LET"],
-			"true":   Tok["TRUE"],
-			"false":  Tok["FALSE"],
-			"if":     Tok["IF"],
-			"else":   Tok["ELSE"],
-			"return": Tok["RETURN"],
+			"break":    	Tok["BREAK"],
+			"continue":    	Tok["CONTINUE"],
+			"var":    	Tok["VAR"],
+			"true":   	Tok["TRUE"],
+			"false":  	Tok["FALSE"],
+			"if":     	Tok["IF"],
+			"else":   	Tok["ELSE"],
+			"return": 	Tok["RETURN"],
 		}
 		
 		if (keywords.containsKey(ident)) {
