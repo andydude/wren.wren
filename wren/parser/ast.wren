@@ -55,7 +55,7 @@ class StatementDeclaration is Declaration {
 		_statement = statement
 	}
 	toString {
-		return "<StatementDeclartion>"
+		return statement.toString
 	}
 }
 
@@ -199,7 +199,7 @@ class ExpressionStatement is Statement {
 		_expression = expression
 	}
 	toString {
-		return _expression.toString + ";"
+		return _expression.toString
 	}
 }
 

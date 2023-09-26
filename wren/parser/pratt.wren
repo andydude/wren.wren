@@ -1,12 +1,12 @@
 class PrattEntry {
-	// kind is a number like TokenKind["PLUS"]
+	// kind is a number like Tok["PLUS"]
 	kind { _kind }
 
-	// prec is a number like 2
+	// prec is a number like Prec["TERM"]
 	prec { _prec }
 
 	// assoc is a boolean like
-	// false, implying Left-associative
+	// false, implying Left-associative (or Prefix)
 	// true, implying Right-associative
 	assoc { _assoc }
 
@@ -28,7 +28,7 @@ class PrattParser {
 	defaultPrec { _defaultPrec }
 	prefixTable { _prefixTable }
 	infixTable { _infixTable }
-	
+
 	construct new(lexer, defaultPrec, prefixTable, infixTable) {
 		_lexer = lexer
 		_previousToken = null
@@ -39,20 +39,20 @@ class PrattParser {
 	}
 
 	// monkey nextToken()
-	// lox advance()
+	// clox advance()
 	advance() {
 
 		// monkey .curToken
-		// lox .previous
+		// clox .previous
 		_previousToken = _nextToken
 
 		// monkey .peekToken
-		// lox .current
+		// clox .current
 		_nextToken = _lexer.nextToken()
 	}
-	
+
 	// monkey expectPeek
-	// lox match
+	// clox match
 	match(kind) {
 		if (!check(kind)) {
 			return false
@@ -62,8 +62,11 @@ class PrattParser {
 	}
 
 	// monkey peekTokenIs
-	// lox check
+	// clox check
 	check(kind) {
+		if (_nextToken == null) {
+			return false
+		}
 		return _nextToken.kind == kind
 	}
 
@@ -86,25 +89,27 @@ class PrattParser {
 		if (token.kind.name == "NEWLINE") {
 			return true
 		}
-		
+
 		return false
 	}
-	
+
 	// monkey peekPrecedence
-	// lox 
+	// clox getRule
 	getPrecedence(opToken) {
 		var prec = _infixTable[opToken.kind.value]
 		if (prec == null) {
 			return _defaultPrec
 		}
-		return prec
+		return prec.prec
 	}
-	
+
+	// monkey parseExpression
+	// clox parsePrecedence
 	parsePrecedence(minPrec) {
 		if (isEndish(_nextToken)) {
 			return null
 		}
-		
+
 		var left = parsePrefixSelector(_nextToken)
 		var prec = 0
 		if (left == null) {
@@ -115,13 +120,13 @@ class PrattParser {
 			if (isEndish(_nextToken)) {
 				break
 			}
-			
+
 			prec = getPrecedence(_nextToken)
 			if (prec.value > minPrec.value) {
 				System.print("Got bad precedence")
 				break
 			}
-			
+
 			advance()
 
 			var right = parseInfixSelector(_previousToken, left)

@@ -1,17 +1,7 @@
-import "./environment" for Environment
-import "../object/object" for
-	ArrayRuntime,
-	HashMapRuntime,
-	BooleanRuntime,
-	EmptyRuntime,
-	Function,
-	NumberRuntime,
-	ReturnValue,
-	StringRuntime
-
-import "../ast/ast" for
+import "../parser/ast" for
 	ArrayLiteral,
 	BinaryExpression,
+	Declaration,
 	BlockStatement,
 	BooleanLiteral,
 	CallExpression,
@@ -27,6 +17,7 @@ import "../ast/ast" for
 	Identifier,
 	IndexExpression,
 	NumberLiteral,
+	StatementDeclaration,
 	Literal,
 	LiteralExpression,
 	Node,
@@ -36,22 +27,34 @@ import "../ast/ast" for
 	Statement,
 	StringLiteral,
 	UnaryExpression
-// Newlines are allowed after Commas
-	
+
+import "./runtime" for
+	ArrayRuntime,
+	HashMapRuntime,
+	BooleanRuntime,
+	EmptyRuntime,
+	Function,
+	NumberRuntime,
+	ReturnValue,
+	StringRuntime
+
+import "./environment" for Environment
 
 class Interpreter {
 	construct new() {
 	}
 	
 	eval(node, env) {
-		if (node is Program) {
-			return evalProgram(node, env)
-		} else if (node is Literal) {
+		if (node is Literal) {
 			return evalLiteral(node, env)
 		} else if (node is Expression) {
 			return evalExpression(node, env)
 		} else if (node is Statement) {
 			return evalStatement(node, env)
+		} else if (node is Declaration) {
+			return evalDeclaration(node, env)
+		} else if (node is Program) {
+			return evalProgram(node, env)
 		} else if (node is Node) {
 			return evalNode(node, env)
 		} else {
@@ -63,6 +66,22 @@ class Interpreter {
 		return evalBlockStatement(node.body, env)
 	}
 
+	evalDeclaration(node, env) {
+		if (node is ClassDeclaration) {
+			return evalClassDeclaration(node, env)
+		} else if (node is VariableDeclaration) {
+			return evalVariableDeclaration(node, env)
+		} else if (node is StatementDeclaration) {
+			return evalStatementDeclaration(node, env)
+		} else {
+			Fiber.abort("evalDeclaration " + node.type.toString)
+		}
+	}
+
+	evalStatementDeclaration(node, env) {
+		return evalStatement(node.statement, env)
+	}
+	
 	evalStatement(node, env) {
 		if (node is BlockStatement) {
 			return evalBlockStatement(node, env)
@@ -73,15 +92,15 @@ class Interpreter {
 		} else if (node is ExpressionStatement) {
 			return evalExpressionStatement(node, env)
 		} else {
-			Fiber.abort("WTF")
+			Fiber.abort("evalStatement " + node.type.toString)
 		}
 	}
 
 	evalBlockStatement(node,  env) {
 		var result = null
 
-		for (s in node.statements) {
-			result = this.evalStatement(s, env)
+		for (decl in node.statements) {
+			result = this.evalDeclaration(decl, env)
 		}
 		
 		return result
@@ -127,7 +146,7 @@ class Interpreter {
 		} else if (node is Identifier) {
 			return evalIdentifier(node, env)
 		} else {
-			Fiber.abort("WTF" + node.type.toString)
+			Fiber.abort("evalExpression " + node.type.toString)
 		}
 	}
 
@@ -214,7 +233,7 @@ class Interpreter {
 		} else if (node is HashMapLiteral) {
 			return evalHashMapLiteral(node, env)
 		} else {
-			Fiber.abort("WTF")
+			Fiber.abort("evalLiteral " + node.type.toString)
 		}
 	}
 

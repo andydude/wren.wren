@@ -1,6 +1,4 @@
-import "./token" for Token, Tok, Prec
-import "./pratt" for PrattEntry, PrattParser
-import "../ast/ast" for
+import "./ast" for
 	ArrayLiteral,
 	BinaryExpression,
 	BlockStatement,
@@ -23,7 +21,9 @@ import "../ast/ast" for
 	VariableDeclaration,
 	StringLiteral,
 	UnaryExpression
-	// Newlines can appear after Commas
+
+import "./token" for Token, Tok, Prec
+import "./pratt" for PrattEntry, PrattParser
 
 
 class Parser is PrattParser {
