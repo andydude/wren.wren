@@ -63,8 +63,12 @@ class Lexer {
 			tok = Token.new(Tok["LT"], _char)
 		} else if (_char == ">") {
 			tok = Token.new(Tok["GT"], _char)
+		} else if (_char == "?") {
+			tok = Token.new(Tok["QUEST"], _char)
 		} else if (_char == ":") {
 			tok = Token.new(Tok["COLON"], _char)
+		} else if (_char == ".") {
+			tok = Token.new(Tok["DOT"], _char)
 		} else if (_char == ",") {
 			tok = Token.new(Tok["COMMA"], _char)
 		} else if (_char == "(") {
@@ -187,12 +191,14 @@ class Lexer {
 		var keywords = {
 			"break":    	Tok["BREAK"],
 			"continue":    	Tok["CONTINUE"],
-			"var":    	Tok["VAR"],
-			"true":   	Tok["TRUE"],
+			"else":   	Tok["ELSE"],
 			"false":  	Tok["FALSE"],
 			"if":     	Tok["IF"],
-			"else":   	Tok["ELSE"],
+			"null":   	Tok["NULL"],
 			"return": 	Tok["RETURN"],
+			"true":   	Tok["TRUE"],
+			"var":    	Tok["VAR"],
+			"while":   	Tok["WHILE"],
 		}
 		
 		if (keywords.containsKey(ident)) {

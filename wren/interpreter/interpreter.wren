@@ -8,6 +8,7 @@ import "../parser/ast" for
 	ClassDeclaration,
 	ConditionExpression,
 	ConditionStatement,
+	DotExpression,
 	EmptyLiteral,
 	Expression,
 	ExpressionStatement,
@@ -16,17 +17,18 @@ import "../parser/ast" for
 	HashMemberNode,
 	Identifier,
 	IndexExpression,
-	NumberLiteral,
-	StatementDeclaration,
 	Literal,
 	LiteralExpression,
 	Node,
+	NumberLiteral,
 	Program,
 	ReturnStatement,
-	VariableDeclaration,
 	Statement,
+	StatementDeclaration,
 	StringLiteral,
-	UnaryExpression
+	UnaryExpression,
+	VariableDeclaration,
+	WhileStatement
 
 import "./runtime" for
 	ArrayRuntime,
@@ -43,7 +45,7 @@ import "./environment" for Environment
 class Interpreter {
 	construct new() {
 	}
-	
+
 	eval(node, env) {
 		if (node is Literal) {
 			return evalLiteral(node, env)
@@ -81,19 +83,28 @@ class Interpreter {
 	evalStatementDeclaration(node, env) {
 		return evalStatement(node.statement, env)
 	}
-	
+
 	evalStatement(node, env) {
 		if (node is BlockStatement) {
 			return evalBlockStatement(node, env)
-		} else if (node is VariableDeclaration) {
-			return evalVariableDeclaration(node, env)
+		} else if (node is ConditionStatement) {
+			return evalConditionStatement(node, env)
 		} else if (node is ReturnStatement) {
 			return evalReturnStatement(node, env)
+		} else if (node is VariableDeclaration) {
+			return evalVariableDeclaration(node, env)
+		} else if (node is WhileStatement) {
+			return evalWhileStatement(node, env)
 		} else if (node is ExpressionStatement) {
 			return evalExpressionStatement(node, env)
 		} else {
 			Fiber.abort("evalStatement " + node.type.toString)
 		}
+	}
+
+	evalWhileStatement(node,  env) {
+		// TODO
+		return evalStatement(node.body, env)
 	}
 
 	evalBlockStatement(node,  env) {
@@ -102,7 +113,7 @@ class Interpreter {
 		for (decl in node.statements) {
 			result = this.evalDeclaration(decl, env)
 		}
-		
+
 		return result
 	}
 
@@ -135,6 +146,8 @@ class Interpreter {
 			return evalBinaryExpression(node, env)
 		} else if (node is UnaryExpression) {
 			return evalUnaryExpression(node, env)
+		} else if (node is DotExpression) {
+			return evalDotExpression(node, env)
 		} else if (node is CallExpression) {
 			return evalCallExpression(node, env)
 		} else if (node is IndexExpression) {
@@ -180,12 +193,23 @@ class Interpreter {
 		return fn.call(node.inner)
 	}
 
-	evalIfExpression(node, env) {
+	evalConditionStatement(node, env) {
 		var cond = evalExpression(node.condition, env)
 		if (isTruthy(cond)) {
-			return eval(node.thenExpression, env)
+			return evalStatement(node.thenStatement, env)
 		} else if (node.elseExpression != null) {
-			return eval(node.elseExpression, env)
+			return evalStatement(node.elseStatement, env)
+		} else {
+			return EmptyRuntime.new()
+		}
+	}
+
+	evalConditionExpression(node, env) {
+		var cond = evalExpression(node.condition, env)
+		if (isTruthy(cond)) {
+			return evalExpression(node.thenExpression, env)
+		} else if (node.elseExpression != null) {
+			return evalExpression(node.elseExpression, env)
 		} else {
 			return EmptyRuntime.new()
 		}
@@ -194,8 +218,20 @@ class Interpreter {
 	evalFunctionDeclaration(node, env) {
 	}
 
+	evalDotExpression(node, env) {
+		//var target = evalExpression(node.target, env)
+		//System.print(node.name.type.toString)
+		return Identifier.new(node.target.name + "." + node.name.name)
+	}
+
 	evalCallExpression(node, env) {
-		
+		var target = evalExpression(node.target, env)
+		var args = evalExpression(node.args[0], env)
+		if (target.name == "System.print") {
+			return System.print(args)
+		} else {
+			System.print("unknown function")
+		}
 	}
 
 	evalIndexExpression(node, env) {
@@ -203,6 +239,11 @@ class Interpreter {
 	}
 
 	evalIdentifier(node, env) {
+		builtins = {
+			"System": {
+				"print": System.print,
+			}
+		}
 		if (env.containsKey(node.name)) {
 			var val = env[node.name]
 			return val
@@ -267,13 +308,20 @@ class Interpreter {
 	}
 
 	isTruthy(obj) {
-		if (obj is Bool) {
-			return obj
-		} else if (obj == null) {
+		if (obj is BooleanRuntime) {
+			return obj.value
+		} else if (obj is EmptyRuntime) {
 			return false
 		} else {
 			return true
 		}
+		// if (obj is Bool) {
+		// 	return obj
+		// } else if (obj == null) {
+		// 	return false
+		// } else {
+		// 	return true
+		// }
 	}
 
 	newError(message) {

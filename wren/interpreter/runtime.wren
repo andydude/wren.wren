@@ -48,12 +48,12 @@ class HashMapRuntime is MonkeyObject {
 }
 
 class BooleanRuntime is MonkeyObject {
-	bit { _bit }
-	construct new(bit) {
-		_bit = bit
+	value { _value }
+	construct new(value) {
+		_value = value
 	}
 	toString {
-		if (_bit) {
+		if (_value) {
 			return "true"
 		} else {
 			return "false"

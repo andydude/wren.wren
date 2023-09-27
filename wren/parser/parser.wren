@@ -7,6 +7,7 @@ import "./ast" for
 	ClassDeclaration,
 	ConditionExpression,
 	ConditionStatement,
+	DotExpression,
 	EmptyLiteral,
 	ExpressionStatement,
 	FunctionDeclaration,
@@ -18,8 +19,9 @@ import "./ast" for
 	Program,
 	ReturnStatement,
 	StatementDeclaration,
-	VariableDeclaration,
 	StringLiteral,
+	VariableDeclaration,
+	WhileStatement,
 	UnaryExpression
 
 import "./token" for Token, Tok, Prec
@@ -39,9 +41,6 @@ class Parser is PrattParser {
 		prefixTable[Tok["MINUS"].value] = PrattEntry.new(
 			Tok["MINUS"], Prec["PRE"], false,
 			Fn.new {|o| this.parsePrefixExpression(o)})
-		//prefixTable[Tok["IF"].value] = PrattEntry.new(
-		//	Tok["IF"], Prec["PRE"], false,
-		//	Fn.new {|o| this.parseConditionExpression()})
 		prefixTable[Tok["IDENT"].value] = PrattEntry.new(
 			Tok["IDENT"], Prec["PRE"], false,
 			Fn.new {|o| this.parseIdentifier()})
@@ -60,6 +59,9 @@ class Parser is PrattParser {
 		prefixTable[Tok["TRUE"].value] = PrattEntry.new(
 			Tok["TRUE"], Prec["PRE"], false,
 			Fn.new {|o| this.parseBooleanLiteral()})
+		prefixTable[Tok["NULL"].value] = PrattEntry.new(
+			Tok["NULL"], Prec["PRE"], false,
+			Fn.new {|o| this.parseBooleanLiteral()})
 		// prefixTable[Tok["NULL"].value] = PrattEntry.new(
 		// 	Tok["NULL"], Prec["PRE"], false,
 		// 	Fn.new {|o| this.parseBooleanLiteral()})
@@ -75,6 +77,9 @@ class Parser is PrattParser {
 
 		// infix operators
 
+		infixTable[Tok["DOT"].value] = PrattEntry.new(
+			Tok["DOT"], Prec["POST"], false,
+			Fn.new {|o, t| this.parseDotExpression(t)})
 		infixTable[Tok["LPAREN"].value] = PrattEntry.new(
 			Tok["LPAREN"], Prec["POST"], false,
 			Fn.new {|o, t| this.parseCallExpression(t)})
@@ -107,10 +112,10 @@ class Parser is PrattParser {
 			Fn.new {|o, t| this.parseInfixExpression(o, t)})
 		infixTable[Tok["QUEST"].value] = PrattEntry.new(
 			Tok["QUEST"], Prec["COND"], false,
-			Fn.new {|o, t| this.parseKeyLiteral(o, t)})
+			Fn.new {|o, t| this.parseConditionExpression(o, t)})
 		infixTable[Tok["COLON"].value] = PrattEntry.new(
 			Tok["COLON"], Prec["COND"], false,
-			Fn.new {|o, t| this.parseKeyLiteral(o, t)})
+			Fn.new {|o, t| this.parseHashMemberNode(o, t)})
 
 		super(lexer, Prec["LAST"], prefixTable, infixTable)
 		advance()
@@ -153,10 +158,14 @@ class Parser is PrattParser {
 	}
 	parseImportDeclaration() {
 	}
-	
+
 	parseStatement() {
 		if (check(Tok["RETURN"])) {
 			return parseReturnStatement()
+		} else if (check(Tok["IF"])) {
+			return parseConditionStatement()
+		} else if (check(Tok["WHILE"])) {
+			return parseWhileStatement()
 		// } else if (check(Tok["LBRACE"])) {
 		// 	return parseBlockStatement()
 		} else {
@@ -194,8 +203,10 @@ class Parser is PrattParser {
 
 	parseExpressionStatement() {
 		var expr = parseExpression()
-		if (!match(Tok["NEWLINE"])) {
-			Fiber.abort("expected ';'")
+		if (!isEndish(this.nextToken)) {
+			if (!match(Tok["NEWLINE"])) {
+				Fiber.abort("expected ';'")
+			}
 		}
 		return ExpressionStatement.new(expr)
 	}
@@ -242,7 +253,24 @@ class Parser is PrattParser {
 		return expr
 	}
 
-	parseIfExpression() {
+	parseWhileStatement() {
+		if (!match(Tok["WHILE"])) {
+			return null
+		}
+		if (!match(Tok["LPAREN"])) {
+			return null
+		}
+		var cond = parseExpression()
+		if (!match(Tok["RPAREN"])) {
+			return null
+		}
+		if (!check(Tok["LBRACE"])) {
+			return null
+		}
+		var iterBlock = parseBlockStatement()
+		return WhileStatement.new(cond, iterBlock)
+	}
+	parseConditionStatement() {
 		if (!match(Tok["IF"])) {
 			return null
 		}
@@ -259,11 +287,12 @@ class Parser is PrattParser {
 		var thenBlock = parseBlockStatement()
 		if (match(Tok["ELSE"])) {
 			var elseBlock = parseBlockStatement()
-			return ConditionExpression.new(cond, thenBlock, elseBlock)
+			return ConditionStatement.new(cond, thenBlock, elseBlock)
 		} else {
-			return ConditionExpression.new(cond, thenBlock, null)
+			return ConditionStatement.new(cond, thenBlock, null)
 		}
 	}
+
 
 	// Precondition:
 	// last == LBRACE
@@ -411,9 +440,27 @@ class Parser is PrattParser {
 		return BinaryExpression.new(opToken, left, right)
 	}
 
-	parseKeyLiteral(opToken, left) {
-		var right = parseExpression()
-		return HashMemberNode.new(left, right)
+	parseConditionExpression(opToken, left) {
+		var opDef = super.infixTable[opToken.kind.value]
+		var right = parsePrecedence(opDef.prec)
+		if (right is HashMemberNode == false) {
+			Fiber.abort("expected colon")
+		}
+
+		var mid = right.left
+		var right2 = right.right
+		return ConditionExpression.new(left, mid, right2)
+	}
+	parseHashMemberNode(opToken, left) {
+		var opDef = super.infixTable[opToken.kind.value]
+		var right = parsePrecedence(opDef.prec)
+		return HashMemberNode.new(opToken, left, right)
+	}
+
+	parseDotExpression(target) {
+		match(Tok["DOT"])
+		var name = parseIdentifier()
+		return DotExpression.new(target, name)
 	}
 
 	parseCallExpression(target) {

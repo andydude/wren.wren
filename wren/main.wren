@@ -1,12 +1,12 @@
-import "../parser/lexer" for Lexer
-import "../parser/parser" for Parser
-import "./interpreter" for Interpreter
-import "./environment" for Environment
+import "./interpreter/environment" for Environment
+import "./interpreter/interpreter" for Interpreter
+import "./parser/lexer" for Lexer
+import "./parser/parser" for Parser
 import "io" for Stdin, Stdout
 
 var PROMPT = ">> "
-var DEBUG_LEXER = true
-var DEBUG_PARSER = true
+var DEBUG_LEXER = false
+var DEBUG_PARSER = false
 var env = Environment.new()
 
 while (true) {
@@ -14,8 +14,7 @@ while (true) {
 	Stdout.flush()
 	var line = Stdin.readLine()
 	line = line + "\n"
-	System.print("-- " + line)
-	if (true) {
+	if (DEBUG_LEXER) {
 		var lexer = Lexer.new(line)
 		System.print("debug lexer")
 		while (true) {

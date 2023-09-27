@@ -30,6 +30,7 @@ var Tok = Enum.new("Tok", [
 	"BANG_EQ",
 	"COLON",
 	"COMMA",
+	"DOT",
 	"DOT2",
 	"DOT3",
 	"EQ",

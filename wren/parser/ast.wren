@@ -45,7 +45,17 @@ class Program is Node {
 		_body = body
 	}
 	toString {
-		return _body.toString
+		var res = _body.toString
+		if (res[0] == "{") {
+			res = res[1...res.count]
+		}
+		if (res[res.count - 2..res.count - 1] == "\n}") {
+			res = res[0..(res.count - 3)]
+		}
+		if (res[res.count - 1] == "}") {
+			res = res[0..(res.count - 2)]
+		}
+		return res
 	}
 }
 
@@ -75,7 +85,7 @@ class ClassDeclaration is Declaration {
 		_memberList = memberList
 	}
 
-	
+
 }
 
 class FunctionDeclaration is Declaration {
@@ -132,7 +142,17 @@ class ForStatement is Statement {
 class ReturnStatement is Statement {}
 class ContinueStatement is Statement {}
 class BreakStatement is Statement {}
-class WhileStatement is Statement {}
+class WhileStatement is Statement {
+	condition { _condition }
+	body { _body }
+	construct new(condition, body) {
+		_condition = condition
+		_body = body
+	}
+	toString {
+		return "while (" + _condition.toString + ") " + _body.toString
+	}
+}
 
 class BlockStatement is Statement {
 	statements { _statements }
@@ -149,7 +169,7 @@ class BlockStatement is Statement {
 		for (st in _statements) {
 			repr = repr + st.toString
 		}
-		
+
 		repr = repr + "}"
 		return repr
 	}
@@ -170,13 +190,13 @@ class ConditionStatement is Statement {
 	condition { _condition }
 	thenStatement { _thenStatement }
 	elseStatement { _elseStatement }
-	
+
 	construct new(condition, thenExp, elseExp) {
 		_condition = condition
 		_thenStatement = thenExp
 		_elseStatement = elseExp
 	}
-	
+
 	toString {
 		var res = "if ("
 		res = res + _condition.toString
@@ -207,22 +227,22 @@ class ConditionExpression is Expression {
 	condition { _condition }
 	thenExpression { _thenExpression }
 	elseExpression { _elseExpression }
-	
+
 	construct new(condition, thenExp, elseExp) {
 		_condition = condition
 		_thenExpression = thenExp
 		_elseExpression = elseExp
 	}
-	
+
 	toString {
-		var res = "if ("
-		res = res + _condition.toString
-		res
-		res = res + ") "
+		var res = _condition.toString
+		res = res + " ? "
 		res = res + _thenExpression.toString
+		res = res + " : "
 		if (_elseExpression != null) {
-			res = res + " else "
 			res = res + _elseExpression.toString
+		} else {
+			res = res + "null"
 		}
 		return res
 	}
@@ -251,6 +271,18 @@ class UnaryExpression is Expression {
 	}
 	toString {
 		return _op.text + " " + _inner.toString
+	}
+}
+
+class DotExpression is Expression {
+	target { _target }
+	name { _name }
+	construct new(target, name) {
+		_target = target
+		_name = name
+	}
+	toString {
+		return _target.toString + "." + _name.toString
 	}
 }
 
@@ -303,15 +335,26 @@ class Identifier is Expression {
 	}
 }
 
-class BooleanLiteral is Literal {}
+class BooleanLiteral is Literal {
+	construct new(value) {
+		super(value)
+	}
+}
 class EmptyLiteral is Literal {
+	construct new() {
+		super(null)
+	}
 }
 class NumberLiteral is Literal {
 	construct new(value) {
 		super(value)
 	}
 }
-class StringLiteral is Literal {}
+class StringLiteral is Literal {
+	construct new(value) {
+		super(value)
+	}
+}
 class ArrayLiteral is Literal {
 	value { _value }
 	construct new(value) {
@@ -331,4 +374,8 @@ class ArrayLiteral is Literal {
 	}
 }
 class HashMapLiteral is Literal {}
-class HashMemberNode is Node {}
+class HashMemberNode is BinaryExpression {
+	construct new(op, left, right) {
+		super(op, left, right)
+	}
+}
