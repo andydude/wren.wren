@@ -99,8 +99,9 @@ class FunctionDeclaration is Declaration {
 		if (params is List == false) {
 			Fiber.abort("expected List")
 		}
-		if (body is BlockStatement == false) {
-			Fiber.abort("expected BlockStatement")
+		if (body is BlockStatement == false &&
+		    body is ExpressionStatement == false) {
+			Fiber.abort("expected BlockStatement or ExpressionStatement")
 		}
 		_name = name
 		_parameterList = params
@@ -258,7 +259,7 @@ class BinaryExpression is Expression {
 		_right = right
 	}
 	toString {
-		return _left.toString + " " + _op.text + " " + _right.toString
+		return "(" + _left.toString + " " + _op.text + " " + _right.toString + ")"
 	}
 }
 
@@ -373,9 +374,16 @@ class ArrayLiteral is Literal {
 		return "[" + elemstr + "]"
 	}
 }
-class HashMapLiteral is Literal {}
+class HashMapLiteral is Literal {
+	members { _members }
+	construct new(members) {
+		_members = members
+	}
+}
+
 class HashMemberNode is BinaryExpression {
 	construct new(op, left, right) {
+		// op should always be COLON
 		super(op, left, right)
 	}
 }

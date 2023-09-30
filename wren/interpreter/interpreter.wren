@@ -32,10 +32,10 @@ import "../parser/ast" for
 
 import "./runtime" for
 	ArrayRuntime,
-	HashMapRuntime,
+	AstFunc,
 	BooleanRuntime,
 	EmptyRuntime,
-	Function,
+	HashMapRuntime,
 	NumberRuntime,
 	ReturnValue,
 	StringRuntime
@@ -158,6 +158,8 @@ class Interpreter {
 			return evalLiteral(node, env)
 		} else if (node is Identifier) {
 			return evalIdentifier(node, env)
+		} else if (node is FunctionDeclaration) {
+			return node
 		} else {
 			Fiber.abort("evalExpression " + node.type.toString)
 		}
@@ -197,7 +199,7 @@ class Interpreter {
 		var cond = evalExpression(node.condition, env)
 		if (isTruthy(cond)) {
 			return evalStatement(node.thenStatement, env)
-		} else if (node.elseExpression != null) {
+		} else if (node.elseStatement != null) {
 			return evalStatement(node.elseStatement, env)
 		} else {
 			return EmptyRuntime.new()
@@ -221,17 +223,20 @@ class Interpreter {
 	evalDotExpression(node, env) {
 		//var target = evalExpression(node.target, env)
 		//System.print(node.name.type.toString)
-		return Identifier.new(node.target.name + "." + node.name.name)
+		return evalExpression(Identifier.new(node.target.name + "." + node.name.name), env)
 	}
+
 
 	evalCallExpression(node, env) {
 		var target = evalExpression(node.target, env)
-		var args = evalExpression(node.args[0], env)
-		if (target.name == "System.print") {
-			return System.print(args)
-		} else {
-			System.print("unknown function")
-		}
+		var args = evalExpressionList(node.args, env)
+		return applyFunction(target, args)
+	}
+
+	evalCallBlockExpression(node, env) {
+		var target = evalExpression(node.target, env)
+		var args = evalExpressionList(node.args, env)
+		return applyFunction(target, args)
 	}
 
 	evalIndexExpression(node, env) {
@@ -239,10 +244,9 @@ class Interpreter {
 	}
 
 	evalIdentifier(node, env) {
-		builtins = {
-			"System": {
-				"print": System.print,
-			}
+		var builtins = {
+			"System.print":
+			Fn.new {|a| System.print(a)},
 		}
 		if (env.containsKey(node.name)) {
 			var val = env[node.name]
@@ -301,8 +305,7 @@ class Interpreter {
 	evalHashMapLiteral(node, env) {
 		var map = Map.new()
 		for (maplet in node.members) {
-			System.print(maplet.key.type)
-			map[maplet.key.str] = maplet.value
+			map[maplet.left.value] = maplet.right
 		}
 		return HashMapRuntime.new(map)
 	}
@@ -340,7 +343,22 @@ class Interpreter {
 		return result
 	}
 
-	extendedFunctionEnv(fn, args) {
+
+	
+	applyFunction(target, args) {
+		if (target is AstFunc) {
+			return applyAstFunction(target, args)
+		} else if (target is Fn) {
+			return applyWrenFunction(target, args)
+		} else {
+			System.print("unknown function")
+		}
+		//if (fn is Function) {
+		//} else if (fn is Fn) {
+			return fn.call(args)
+		//}
+	}
+	applyAstFunction(target, args) {
 		var env = fn.env.newChild({})
 
 		for (pi in 0...(fn.parameters.count)) {
@@ -348,15 +366,22 @@ class Interpreter {
 			env[p.name] = args[pi]
 		}
 
-		return env
+		var result = eval(fn.body, env)
+		return result
 	}
-	applyFunction(fn, args) {
-		//if (fn is Function) {
-		//	var env = extendFunctionEnv(fn, args)
-		//	var result = eval(fn.body, env)
-		//	return result
-		//} else if (fn is Fn) {
-			return fn.call(args)
-		//}
+	applyWrenFunction(target, args) {
+		if (target.arity != args.count) {
+			System.print("too many args!")
+		}
+		if (target.arity == 0) {
+			return target.call()
+		} else if (target.arity == 1) {
+			return target.call(args[0])
+		} else if (target.arity == 2) {
+			return target.call(args[0], args[1])
+		} else {
+			System.print("unsupported arity")
+		}
 	}
+
 }

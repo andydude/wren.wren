@@ -7,7 +7,7 @@ class ReturnValue is MonkeyObject {
 	}
 }
 
-class Function is MonkeyObject {
+class AstFunc is MonkeyObject {
 	name { _name }
 	parameters { _parameters }
 	body { _body }

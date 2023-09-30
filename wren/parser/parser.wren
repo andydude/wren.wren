@@ -35,24 +35,21 @@ class Parser is PrattParser {
 
 		// prefix operators
 
-		prefixTable[Tok["BANG"].value] = PrattEntry.new(
-			Tok["BANG"], Prec["PRE"], false,
-			Fn.new {|o| this.parsePrefixExpression(o)})
-		prefixTable[Tok["MINUS"].value] = PrattEntry.new(
-			Tok["MINUS"], Prec["PRE"], false,
-			Fn.new {|o| this.parsePrefixExpression(o)})
 		prefixTable[Tok["IDENT"].value] = PrattEntry.new(
 			Tok["IDENT"], Prec["PRE"], false,
 			Fn.new {|o| this.parseIdentifier()})
-		//prefixTable[Tok["FUNCTION"].value] = PrattEntry.new(
-		//	Tok["FUNCTION"], Prec["PRE"], false,
-		//	Fn.new {|o| this.parseFunctionExpression()})
 		prefixTable[Tok["NUMBER_LIT"].value] = PrattEntry.new(
 			Tok["NUMBER_LIT"], Prec["PRE"], false,
 			Fn.new {|o| this.parseNumberLiteral()})
 		prefixTable[Tok["STRING_LIT"].value] = PrattEntry.new(
 			Tok["STRING_LIT"], Prec["PRE"], false,
 			Fn.new {|o| this.parseStringLiteral()})
+		prefixTable[Tok["BANG"].value] = PrattEntry.new(
+			Tok["BANG"], Prec["PRE"], false,
+			Fn.new {|o| this.parsePrefixExpression(o)})
+		prefixTable[Tok["MINUS"].value] = PrattEntry.new(
+			Tok["MINUS"], Prec["PRE"], false,
+			Fn.new {|o| this.parsePrefixExpression(o)})
 		prefixTable[Tok["FALSE"].value] = PrattEntry.new(
 			Tok["FALSE"], Prec["PRE"], false,
 			Fn.new {|o| this.parseBooleanLiteral()})
@@ -62,12 +59,9 @@ class Parser is PrattParser {
 		prefixTable[Tok["NULL"].value] = PrattEntry.new(
 			Tok["NULL"], Prec["PRE"], false,
 			Fn.new {|o| this.parseBooleanLiteral()})
-		// prefixTable[Tok["NULL"].value] = PrattEntry.new(
-		// 	Tok["NULL"], Prec["PRE"], false,
-		// 	Fn.new {|o| this.parseBooleanLiteral()})
 		prefixTable[Tok["LBRACE"].value] = PrattEntry.new(
 			Tok["LBRACE"], Prec["PRE"], false,
-			Fn.new {|o| this.parseHashLiteral()})
+			Fn.new {|o| this.parseHashMapLiteral()})
 		prefixTable[Tok["LBRACK"].value] = PrattEntry.new(
 			Tok["LBRACK"], Prec["PRE"], false,
 			Fn.new {|o| this.parseArrayLiteral()})
@@ -83,6 +77,9 @@ class Parser is PrattParser {
 		infixTable[Tok["LPAREN"].value] = PrattEntry.new(
 			Tok["LPAREN"], Prec["POST"], false,
 			Fn.new {|o, t| this.parseCallExpression(t)})
+		infixTable[Tok["LBRACE"].value] = PrattEntry.new(
+			Tok["LBRACE"], Prec["POST"], false,
+			Fn.new {|o, t| this.parseFunctionExpression(t)})
 		infixTable[Tok["LBRACK"].value] = PrattEntry.new(
 			Tok["LBRACK"], Prec["POST"], false,
 			Fn.new {|o, t| this.parseIndexExpression(t)})
@@ -154,6 +151,7 @@ class Parser is PrattParser {
 			return StatementDeclaration.new(parseStatement())
 		}
 	}
+	
 	parseClassDeclaration() {
 	}
 	parseImportDeclaration() {
@@ -166,8 +164,6 @@ class Parser is PrattParser {
 			return parseConditionStatement()
 		} else if (check(Tok["WHILE"])) {
 			return parseWhileStatement()
-		// } else if (check(Tok["LBRACE"])) {
-		// 	return parseBlockStatement()
 		} else {
 			return parseExpressionStatement()
 		}
@@ -203,6 +199,7 @@ class Parser is PrattParser {
 
 	parseExpressionStatement() {
 		var expr = parseExpression()
+		System.print("= " + this.nextToken.kind.name)
 		if (!isEndish(this.nextToken)) {
 			if (!match(Tok["NEWLINE"])) {
 				Fiber.abort("expected ';'")
@@ -298,51 +295,58 @@ class Parser is PrattParser {
 	// last == LBRACE
 	// cur == Statement
 	parseBlockStatement() {
-		if (!match(Tok["LBRACE"])) {
-			return null
-		}
-		var decls = []
-		while (!check(Tok["RBRACE"])) {
-			var decl = parseDeclaration()
-			if (decl != null) {
-				decls.add(decl)
+		return parseFunctionExpression()
+	}
+	
+	parseFunctionExpression() {
+		System.print("funcExp0")
+		return parseFunctionExpression(null)
+	}
+	
+	parseFunctionExpression(target) {
+		System.print("funcExp1" + target.toString)
+		System.print(super.nextToken.kind.name)
+		if (super.previousToken.kind != Tok["LBRACE"]) {
+			if (!match(Tok["LBRACE"])) {
+				return null
 			}
+		}
+		var parms = []
+		if (target != null) {
+			System.print("Parsing parameters")
+			if (!match(Tok["OR"])) {
+				return null
+			}
+			parms = parseFunctionParameters()
+			System.print(parms.toString)
+			if (!match(Tok["OR"])) {
+				return null
+			}
+		} else {
+			System.print("target is NULL!")
+		}
+		//var body = parseBlockStatement()
+		var body = null
+		if (check(Tok["NEWLINE"])) {
+			var decls = []
+			while (!check(Tok["RBRACE"])) {
+				var decl = parseDeclaration()
+				if (decl != null) {
+					decls.add(decl)
+				}
+			}
+			body = BlockStatement.new(decls)
+		} else {
+			var expr = parseExpression()
+			body = ExpressionStatement.new(expr)
 		}
 		if (!match(Tok["RBRACE"])) {
 			return null
 		}
-		return BlockStatement.new(decls)
-	}
 
-	//parseFunctionDeclaration() {
-	//	System.print(super.nextToken.kind.name)
-	//
-	//	if (!match(Tok["FUNCTION"])) {
-	//		return null
-	//	}
-	//	var name = null
-	//	System.print(super.nextToken.kind.name)
-	//	if (check(Tok["IDENT"])) {
-	//		name = parseIdentifier()
-	//	}
-	//	System.print(super.nextToken.kind.name)
-	//	if (!match(Tok["LPAREN"])) {
-	//		return null
-	//	}
-	//	System.print(super.nextToken.kind.name)
-	//	var parms = parseFunctionParameters()
-	//	System.print(super.nextToken.kind.name)
-	//	if (!match(Tok["RPAREN"])) {
-	//		return null
-	//	}
-	//	if (!check(Tok["LBRACE"])) {
-	//		return null
-	//	}
-	//	var body = parseBlockStatement()
-	//	return FunctionDeclaration.new(
-	//		name, parms, body)
-	//
-	//}
+		return FunctionDeclaration.new(
+			null, parms, body)
+	}
 
 	parseFunctionParameters() {
 		var idents = []
@@ -421,7 +425,7 @@ class Parser is PrattParser {
 	}
 
 	parseInfixSelector(opToken, left) {
-		// System.print("infixSel " + opToken.kind.name)
+		System.print("infixSel " + opToken.kind.name)
 		var opDef = super.infixTable[
 			opToken.kind.value]
 		if (opDef == null) {
@@ -467,6 +471,11 @@ class Parser is PrattParser {
 		match(Tok["LPAREN"])
 		var args = parseFunctionArguments()
 		match(Tok["RPAREN"])
+		return CallExpression.new(target, args)
+	}
+
+	parseCallBlockExpression(target) {
+		var block = parseFunctionExpression()
 		return CallExpression.new(target, args)
 	}
 

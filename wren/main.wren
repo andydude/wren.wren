@@ -6,7 +6,7 @@ import "io" for Stdin, Stdout
 
 var PROMPT = ">> "
 var DEBUG_LEXER = false
-var DEBUG_PARSER = false
+var DEBUG_PARSER = true
 var env = Environment.new()
 
 while (true) {
@@ -19,7 +19,14 @@ while (true) {
 		System.print("debug lexer")
 		while (true) {
 			var t = lexer.nextToken()
-			System.print("L- " + t.text + " " + t.kind.name + "(" + t.kind.value.toString + ")")
+			var s = t.text
+			if (t.kind.name == "NEWLINE") {
+				s = " "
+			}
+			if (t.kind.name == "EOF") {
+				s = " "
+			}
+			System.print("L- " + s + " " + t.kind.name + "(" + t.kind.value.toString + ")")
 			if (t.kind.value == 0) break
 		}
 	}

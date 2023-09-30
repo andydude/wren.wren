@@ -56,13 +56,29 @@ class Lexer {
 				tok = Token.new(Tok["BANG"], _char)
 			}
 		} else if (_char == "/") {
-			tok = Token.new(Tok["SOL"], _char)
+			if (peekChar() == "/") {
+				skipLineComment()
+			} else {
+				tok = Token.new(Tok["SOL"], _char)
+			}
 		} else if (_char == "*") {
 			tok = Token.new(Tok["STAR"], _char)
 		} else if (_char == "<") {
 			tok = Token.new(Tok["LT"], _char)
 		} else if (_char == ">") {
 			tok = Token.new(Tok["GT"], _char)
+		} else if (_char == "|") {
+			if (peekChar() == "|") {
+				tok = Token.new(Tok["OR2"], _char)
+			} else {
+				tok = Token.new(Tok["OR"], _char)
+			}
+		} else if (_char == "&") {
+			if (peekChar() == "&") {
+				tok = Token.new(Tok["AND2"], _char)
+			} else {
+				tok = Token.new(Tok["AND"], _char)
+			}
 		} else if (_char == "?") {
 			tok = Token.new(Tok["QUEST"], _char)
 		} else if (_char == ":") {
@@ -106,6 +122,12 @@ class Lexer {
 		}
 		readChar()
 		return tok
+	}
+
+	skipLineComment() {
+		while (_char != "\n") {
+			readChar()
+		}
 	}
 	
 	skipSpace() {

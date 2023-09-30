@@ -26,6 +26,8 @@ var Tok = Enum.new("Tok", [
 	"EOF",
 
 	// operators
+	"AND",
+	"AND2",
 	"BANG",
 	"BANG_EQ",
 	"COLON",
@@ -42,6 +44,8 @@ var Tok = Enum.new("Tok", [
 	"LT2",
 	"LT_EQ",
 	"MINUS",
+	"OR",
+	"OR2",
 	"PLUS",
 	"QUEST",
 	"SOL",

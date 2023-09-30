@@ -74,6 +74,9 @@ class PrattParser {
 		if (token.kind.name == "EOF") {
 			return true
 		}
+		if (token.kind.name == "OR") {
+			return true
+		}
 		if (token.kind.name == "COMMA") {
 			return true
 		}
