@@ -52,6 +52,15 @@ class BooleanRuntime is MonkeyObject {
 	construct new(value) {
 		_value = value
 	}
+	! {
+		return !_value
+	}
+	~ {
+		Fiber.abort("Runtime error: Bool does not implement '~'.")
+	}
+	- {
+		Fiber.abort("Runtime error: Bool does not implement '-'.")
+	}
 	toString {
 		if (_value) {
 			return "true"
@@ -63,6 +72,15 @@ class BooleanRuntime is MonkeyObject {
 
 class EmptyRuntime is MonkeyObject {
 	construct new() {
+	}
+	! {
+		return true
+	}
+	~ {
+		Fiber.abort("Runtime error: Null does not implement '~'.")
+	}
+	- {
+		Fiber.abort("Runtime error: Null does not implement '-'.")
 	}
 	toString {
 		return "null"
@@ -77,6 +95,15 @@ class NumberRuntime is MonkeyObject {
 	toString {
 		return _num.toString
 	}
+	! {
+		return _num == null
+	}
+	~ {
+		return ~(_num)
+	}
+	- {
+		return -(_num)
+	}
 	+(other) {
 		return NumberRuntime.new(this.num + other.num)
 	}
@@ -89,6 +116,9 @@ class NumberRuntime is MonkeyObject {
 	/(other) {
 		return NumberRuntime.new(this.num / other.num)
 	}
+	%(other) {
+		return NumberRuntime.new(this.num % other.num)
+	}
 }
 
 class StringRuntime is MonkeyObject {
@@ -98,6 +128,12 @@ class StringRuntime is MonkeyObject {
 	}
 	toString {
 		return "\"" + _str + "\""
+	}
+	! {
+		return _str == null
+	}
+	- {
+		return -(_num)
 	}
 	+(other) {
 		return StringRuntime.new(this.str + other.str)

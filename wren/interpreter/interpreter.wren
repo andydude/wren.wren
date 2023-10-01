@@ -175,6 +175,8 @@ class Interpreter {
 			fn = Fn.new {|a, b| a * b}
 		} else if (node.operator.text == "/") {
 			fn = Fn.new {|a, b| a / b}
+		} else if (node.operator.text == "\%") {
+			fn = Fn.new {|a, b| (a % b)}
 		}
 		if (fn == null) {
 			Fiber.abort("unrecognized binary operator " + node.operator.text)
@@ -185,14 +187,21 @@ class Interpreter {
 	}
 
 	evalUnaryExpression(node, env) {
-		fn = null
+		var fn = null
+		if (node.operator.text == "!") {
+			fn = Fn.new {|a| (!a)}
+		}
+		if (node.operator.text == "~") {
+			fn = Fn.new {|a| (~a)}
+		}
 		if (node.operator.text == "-") {
 			fn = Fn.new {|a| (-a)}
 		}
 		if (fn == null) {
 			Fiber.abort("unrecognized unary operator " + node.operator.text)
 		}
-		return fn.call(node.inner)
+		var inner = evalExpression(node.inner, env)
+		return fn.call(inner)
 	}
 
 	evalConditionStatement(node, env) {

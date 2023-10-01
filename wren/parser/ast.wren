@@ -271,7 +271,7 @@ class UnaryExpression is Expression {
 		_inner = inner
 	}
 	toString {
-		return _op.text + " " + _inner.toString
+		return "(" + _op.text + " " + _inner.toString + ")"
 	}
 }
 

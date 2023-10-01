@@ -46,6 +46,7 @@ var Tok = Enum.new("Tok", [
 	"MINUS",
 	"OR",
 	"OR2",
+	"PCT",
 	"PLUS",
 	"QUEST",
 	"SOL",

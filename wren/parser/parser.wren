@@ -47,6 +47,9 @@ class Parser is PrattParser {
 		prefixTable[Tok["BANG"].value] = PrattEntry.new(
 			Tok["BANG"], Prec["PRE"], false,
 			Fn.new {|o| this.parsePrefixExpression(o)})
+		prefixTable[Tok["TILDE"].value] = PrattEntry.new(
+			Tok["TILDE"], Prec["PRE"], false,
+			Fn.new {|o| this.parsePrefixExpression(o)})
 		prefixTable[Tok["MINUS"].value] = PrattEntry.new(
 			Tok["MINUS"], Prec["PRE"], false,
 			Fn.new {|o| this.parsePrefixExpression(o)})
@@ -88,6 +91,9 @@ class Parser is PrattParser {
 			Fn.new {|o, t| this.parseInfixExpression(o, t)})
 		infixTable[Tok["SOL"].value] = PrattEntry.new(
 			Tok["SOL"], Prec["FACTOR"], false,
+			Fn.new {|o, t| this.parseInfixExpression(o, t)})
+		infixTable[Tok["PCT"].value] = PrattEntry.new(
+			Tok["PCT"], Prec["FACTOR"], false,
 			Fn.new {|o, t| this.parseInfixExpression(o, t)})
 		infixTable[Tok["PLUS"].value] = PrattEntry.new(
 			Tok["PLUS"], Prec["TERM"], false,
@@ -407,7 +413,7 @@ class Parser is PrattParser {
 	}
 
 	parsePrefixSelector(opToken) {
-		// System.print("prefixSel " + opToken.kind.name)
+		System.print("prefixSel " + opToken.kind.name)
 		var opDef = super.prefixTable[
 			opToken.kind.value]
 		if (opDef == null) {
@@ -418,8 +424,8 @@ class Parser is PrattParser {
 		return opDef.parser.call(opToken)
 	}
 	parsePrefixExpression(opToken) {
-		// System.print("prefixExp " + opToken.kind.name)
-		//advance()
+		System.print("prefixExp " + opToken.kind.name)
+		advance()
 		var right = parsePrecedence(Prec["PRE"])
 		return UnaryExpression.new(opToken, right)
 	}

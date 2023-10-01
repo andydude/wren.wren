@@ -46,6 +46,8 @@ class Lexer {
 			tok = Token.new(Tok["PLUS"], _char)
 		} else if (_char == "-") {
 			tok = Token.new(Tok["MINUS"], _char)
+		} else if (_char == "~") {
+			tok = Token.new(Tok["TILDE"], _char)
 		} else if (_char == "!") {
 			if (peekChar() == "=") {
 				var ch = _char
@@ -61,6 +63,8 @@ class Lexer {
 			} else {
 				tok = Token.new(Tok["SOL"], _char)
 			}
+		} else if (_char == "\%") {
+			tok = Token.new(Tok["PCT"], _char)
 		} else if (_char == "*") {
 			tok = Token.new(Tok["STAR"], _char)
 		} else if (_char == "<") {
